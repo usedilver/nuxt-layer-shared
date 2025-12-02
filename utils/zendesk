@@ -1,0 +1,108 @@
+import addResource from '~/utils/dom/addResource'
+
+// Rutas para ocultar el chat
+const hiddenRoutes = []
+
+const selectorButton = '[title="Botón para iniciar la ventana de mensajería"]'
+
+const isShowRoute = () => {
+	const url = window.location.href
+	const showChat = hiddenRoutes.filter((value) => url.includes(value))
+	return showChat.length === 0
+}
+
+const displayChat = (display = 'block') => {
+	const chat = document.querySelector('[title="Ventana de mensajería"]')
+	const button = document.querySelector('[title="Mensaje de la compañía"]')
+	const close = document.querySelector('[title="Cerrar mensaje"]')
+	const message = document.querySelector(selectorButton)
+
+	if (chat) chat.style.display = display
+	if (button) button.style.display = display
+	if (message) message.style.display = display
+	if (close) close.style.display = display
+}
+
+const openChat = () => {
+	if (!window.zE) return
+	window.zE('messenger', 'open')
+}
+
+const closeChat = () => {
+	if (!window.zE) return
+	window.zE('messenger', 'close')
+}
+
+const toggleOpenChat = () => {
+	const isOpen = sessionStorage.getItem('ZD-widgetOpen')
+
+	if (isOpen && isOpen === 'true') {
+		closeChat()
+	} else {
+		openChat()
+	}
+}
+
+const hideChat = () => {
+	closeChat()
+	displayChat('none')
+	sessionStorage.setItem('ZD-widgetShow', 'false')
+}
+
+const showChat = () => {
+	displayChat()
+	sessionStorage.setItem('ZD-widgetShow', 'true')
+}
+
+const toggleRoute = () => {
+	if (isShowRoute()) {
+		showChat()
+	} else {
+		hideChat()
+	}
+}
+
+const toggleShow = () => {
+	const isShow = sessionStorage.getItem('ZD-widgetShow')
+
+	if (isShow && isShow === 'true') {
+		hideChat()
+	} else {
+		showChat()
+	}
+}
+
+const loadScript = async (keyZendesk = 'disabled') => {
+	if (!keyZendesk || keyZendesk === 'disabled') return
+
+	// Agregar script
+	await addResource('ze-snippet', `https://static.zdassets.com/ekr/snippet.js?key=${keyZendesk}`, 'script', true, {
+		async: true,
+	})
+
+	if (isShowRoute()) return
+
+	// Pequeño intervalo para ocultar el chat
+	const isLoadChat = setInterval(() => {
+		const buttonChat = document.querySelector(selectorButton)
+
+		if (buttonChat) {
+			hideChat()
+			clearInterval(isLoadChat)
+		}
+	}, 50)
+}
+
+export default {
+	load: loadScript,
+
+	open: openChat,
+	close: closeChat,
+	toggle: toggleOpenChat,
+
+	show: hideChat,
+	hide: showChat,
+	toggleShow,
+
+	toggleRoute,
+}
